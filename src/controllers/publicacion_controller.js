@@ -3,23 +3,21 @@ import Publicacion from '../models/Publicacion.js'
 import { subirImagenCloudinary, eliminarImagenCloudinary } from '../helpers/uploadCloudinary.js'
 
 
-
 //  Crear una nueva publicacion de libro
 
 const crearPublicacion = async (req, res) => {
     try {
-        const { titulo, descripcion, precio } = req.body
+        const { titulo, descripcion, precio, categoria } = req.body
 
-        // Validar losl campos obligatorios
-        if (!titulo || !descripcion || !precio) {
-            return res.status(400).json({ msg: 'Los campos título, descripción y precio son obligatorios' })
+        if (!titulo || !descripcion || !precio || !categoria) {
+            return res.status(400).json({ msg: 'Los campos título, descripción, precio y categoría son obligatorios' })
         }
 
-        // crear la publicacion con el usuario del token
         const nuevaPublicacion = new Publicacion({
             titulo,
             descripcion,
             precio,
+            categoria,
             usuario: req.usuarioHeader._id
         })
 
@@ -40,16 +38,43 @@ const crearPublicacion = async (req, res) => {
 }
 
 
-//    Listar todas las publicaciones disponibles en publico con filtros)
-
+//  Listar publicaciones con filtros 
 const listarPublicaciones = async (req, res) => {
     try {
-        const publicaciones = await Publicacion.find({ estado: 'disponible' })
+        const { titulo, categoria, precioMin, precioMax, estado } = req.query
+
+        // Construir filtro dinamicamente
+        const filtro = {}
+
+        // Estado: por defecto solo disponible"
+        filtro.estado = estado === 'vendido' ? 'vendido' : 'disponible'
+
+        // Busqueda de título sin importar mayusculas minusculas
+        if (titulo) {
+            filtro.titulo = { $regex: titulo, $options: 'i' }
+        }
+
+        // filtro por categoria exacta
+        if (categoria) {
+            filtro.categoria = categoria
+        }
+
+        // rango de precio
+        if (precioMin || precioMax) {
+            filtro.precio = {}
+            if (precioMin) filtro.precio.$gte = Number(precioMin)
+            if (precioMax) filtro.precio.$lte = Number(precioMax)
+        }
+
+        const publicaciones = await Publicacion.find(filtro)
             .select('-__v -imagenID')
             .populate('usuario', 'nombre email telefono')
             .sort({ createdAt: -1 })
 
-        res.status(200).json(publicaciones)
+        res.status(200).json({
+            total: publicaciones.length,
+            publicaciones
+        })
 
     } catch (error) {
         console.error(error)
@@ -57,8 +82,8 @@ const listarPublicaciones = async (req, res) => {
     }
 }
 
-//     Ver detalle de una publicacion
 
+//    detalle de una publicacion
 const detallePublicacion = async (req, res) => {
     try {
         const { id } = req.params
@@ -79,16 +104,16 @@ const detallePublicacion = async (req, res) => {
 
     } catch (error) {
         console.error(error)
-        res.status(500).json({ msg: ` Error en el servidor - ${error}` })
+        res.status(500).json({ msg: `Error en el servidor - ${error}` })
     }
 }
 
-//     Editar una publicacion propia
 
+//   Editar una publicacion propia
 const editarPublicacion = async (req, res) => {
     try {
         const { id } = req.params
-        const { titulo, descripcion, precio } = req.body
+        const { titulo, descripcion, precio, categoria } = req.body
 
         if (!mongoose.Types.ObjectId.isValid(id)) {
             return res.status(404).json({ msg: `ID inválido: ${id}` })
@@ -104,12 +129,11 @@ const editarPublicacion = async (req, res) => {
             return res.status(403).json({ msg: 'No tienes permisos para editar esta publicación' })
         }
 
-        // Actualizar campos si vienen en el body
         publicacionBDD.titulo      = titulo      ?? publicacionBDD.titulo
         publicacionBDD.descripcion = descripcion ?? publicacionBDD.descripcion
         publicacionBDD.precio      = precio      ?? publicacionBDD.precio
+        publicacionBDD.categoria   = categoria   ?? publicacionBDD.categoria
 
-        // Si viene nueva imagen, eliminar la anterior y subir la nueva
         if (req.files?.imagen) {
             await eliminarImagenCloudinary(publicacionBDD.imagenID)
             const { secure_url, public_id } = await subirImagenCloudinary(req.files.imagen.tempFilePath)
@@ -126,8 +150,8 @@ const editarPublicacion = async (req, res) => {
     }
 }
 
-//    Cambiar el estado del libro a disponible o vendido
 
+//   estado del libro disponible  vendido
 const cambiarEstado = async (req, res) => {
     try {
         const { id } = req.params
@@ -146,7 +170,6 @@ const cambiarEstado = async (req, res) => {
             return res.status(404).json({ msg: 'Publicación no encontrada' })
         }
 
-        // Solo el dueño puede cambiar el estado
         if (publicacionBDD.usuario.toString() !== req.usuarioHeader._id.toString()) {
             return res.status(403).json({ msg: 'No tienes permisos para modificar esta publicación' })
         }
@@ -158,13 +181,12 @@ const cambiarEstado = async (req, res) => {
 
     } catch (error) {
         console.error(error)
-        res.status(500).json({ msg: ` Error en el servidor - ${error}` })
+        res.status(500).json({ msg: `Error en el servidor - ${error}` })
     }
 }
 
 
-//     Eliminar una publicacion propia
-
+// Eliminar una publicacin propia
 const eliminarPublicacion = async (req, res) => {
     try {
         const { id } = req.params
@@ -183,31 +205,33 @@ const eliminarPublicacion = async (req, res) => {
             return res.status(403).json({ msg: 'No tienes permisos para eliminar esta publicación' })
         }
 
-        // Eliminar imagen de Cloudinary si existe
         await eliminarImagenCloudinary(publicacionBDD.imagenID)
-
         await publicacionBDD.deleteOne()
+
         res.status(200).json({ msg: 'Publicación eliminada exitosamente' })
 
     } catch (error) {
         console.error(error)
-        res.status(500).json({ msg: ` Error en el servidor - ${error}` })
+        res.status(500).json({ msg: `Error en el servidor - ${error}` })
     }
 }
 
-//     Listar mis propias publicaciones todas 
 
+//  Listar mis propias publicaciones
 const misPublicaciones = async (req, res) => {
     try {
         const publicaciones = await Publicacion.find({ usuario: req.usuarioHeader._id })
             .select('-__v -imagenID')
             .sort({ createdAt: -1 })
 
-        res.status(200).json(publicaciones)
+        res.status(200).json({
+            total: publicaciones.length,
+            publicaciones
+        })
 
     } catch (error) {
         console.error(error)
-        res.status(500).json({ msg: ` Error en el servidor - ${error}` })
+        res.status(500).json({ msg: `Error en el servidor - ${error}` })
     }
 }
 
