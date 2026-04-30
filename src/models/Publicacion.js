@@ -17,12 +17,28 @@ const publicacionSchema = new Schema(
             required: true,
             min: 0
         },
+        categoria: {
+            type: String,
+            required: true,
+            enum: [
+                'Matemáticas',
+                'Física',
+                'Programación',
+                'Electrónica',
+                'Química',
+                'Administración',
+                'Economía',
+                'Humanidades',
+                'Inglés',
+                'Otros'
+            ]
+        },
         imagen: {
             type: String,
             default: null
         },
         imagenID: {
-            type: String,       // public_id de Cloudinary para poder eliminarla
+            type: String,
             default: null
         },
         estado: {
