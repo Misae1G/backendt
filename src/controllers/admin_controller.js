@@ -124,3 +124,71 @@ const eliminarUsuario = async (req, res) => {
         res.status(500).json({ msg: `Error en el servidor - ${error}` })
     }
 }
+
+// moderar publiaciones
+
+// listar todas las publicaciones 
+
+const listarTodasPublicaciones = async (req, res) => {
+    try {
+        const { titulo, categoria, estado, usuario } = req.query
+ 
+        const filtro = {}
+ 
+        if (titulo)    filtro.titulo    = { $regex: titulo, $options: 'i' }
+        if (categoria) filtro.categoria = categoria
+        if (estado)    filtro.estado    = estado
+        if (usuario && mongoose.Types.ObjectId.isValid(usuario)) {
+            filtro.usuario = usuario
+        }
+ 
+        const publicaciones = await Publicacion.find(filtro)
+            .select('-__v -imagenID')
+            .populate('usuario', 'nombre email')
+            .sort({ createdAt: -1 })
+ 
+        res.status(200).json({
+            total: publicaciones.length,
+            publicaciones
+        })
+ 
+    } catch (error) {
+        console.error(error)
+        res.status(500).json({ msg: `Error en el servidor - ${error}` })
+    }
+}
+
+//  eliminar cualquier publicacion inapropiada
+
+const eliminarPublicacionAdmin = async (req, res) => {
+    try {
+        const { id } = req.params
+ 
+        if (!mongoose.Types.ObjectId.isValid(id)) {
+            return res.status(400).json({ msg: `ID inválido: ${id}` })
+        }
+ 
+        const publicacionBDD = await Publicacion.findById(id)
+        if (!publicacionBDD) {
+            return res.status(404).json({ msg: 'Publicación no encontrada' })
+        }
+ 
+        await eliminarImagenCloudinary(publicacionBDD.imagenID)
+        await publicacionBDD.deleteOne()
+ 
+        res.status(200).json({ msg: 'Publicación eliminada por el administrador' })
+ 
+    } catch (error) {
+        console.error(error)
+        res.status(500).json({ msg: `Error en el servidor - ${error}` })
+    }
+}
+
+export {
+    listarUsuarios,
+    detalleUsuario,
+    cambiarStatusUsuario,
+    eliminarUsuario,
+    listarTodasPublicaciones,
+    eliminarPublicacionAdmin
+}
