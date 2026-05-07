@@ -23,7 +23,7 @@ const crearAdmin = async () => {
         const admin = new Usuario({
             nombre:       'Administrador',
             email:        emailAdmin,
-            password:     'Admin1234',                // crear un nuevo admin
+            password:     'Admin1234',                // contraseña por defecto se recomienda cambiarla después
             telefono:     '0000000000',
             rol:          'admin',
             confirmEmail: true,
