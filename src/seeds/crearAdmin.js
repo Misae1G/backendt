@@ -35,7 +35,7 @@ const crearAdmin = async () => {
 
         console.log('Administrador creado exitosamente')
         console.log(`   Email:    ${emailAdmin}`)
-        console.log(`   Password: Admin1234  ← cámbialo después del primer login`)
+        console.log(`   Password: Admin1234 `)
         process.exit(0)
 
     } catch (error) {
