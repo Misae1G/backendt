@@ -9,6 +9,7 @@ import fileUpload from 'express-fileupload'
 // Importar rutas
 import routerUsuarios from './routers/usuario_routes.js'
 import routerPublicaciones from './routers/publicacion_routes.js'
+import routerAdmin         from './routers/admin_routes.js'
 
 // Inicializaciones
 const app = express()
@@ -41,10 +42,11 @@ app.get('/',(req,res)=> res.send("Server on - UniBooks"))
 // Rutas 
 app.use('/api', routerUsuarios)
 app.use('/api', routerPublicaciones)
+app.use('/api', routerAdmin)
 
-// Manejo de rutas que no sean encontradas
+// manejo de rutas que no sean encontradas
 app.use((req, res) => res.status(404).json({ msg: 'Endpoint no encontrado - 404' }))
 
 
-// Exportar la instancia de express por medio del app
+
 export default  app
