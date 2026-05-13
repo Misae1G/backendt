@@ -11,36 +11,30 @@ import {
     actualizarPassword
 } from '../controllers/usuario_controller.js'
 import { verificarTokenJWT } from '../middlewares/JWT.js'
+import validar from '../middlewares/validar.js'
+import {
+    reglasRegistro,
+    reglasLogin,
+    reglasRecuperarPassword,
+    reglasNuevoPassword,
+    reglasActualizarPerfil,
+    reglasCambiarPassword
+} from '../middlewares/validaciones.js'
 
 const router = Router()
 
-// Rutas publicas
+// rutas piblicas
+router.post('/registro',reglasRegistro,validar, registro)
+router.get('/confirmar/:token',confirmarEmail)
+router.post('/recuperarpassword',reglasRecuperarPassword,validar,recuperarPassword)
+router.get('/recuperarpassword/:token',comprobarTokenPassword)
+router.post('/nuevopassword/:token',reglasNuevoPassword,validar,crearNuevoPassword)
+router.post('/login',reglasLogin,validar, login)
 
-
-// POST /api/registro
-router.post('/registro', registro)
-
-// Confirmacion de cuenta
-router.get('/confirmar/:token', confirmarEmail)
-
-// Recuperacion de contraseña
-router.post('/recuperarpassword', recuperarPassword)
-router.get('/recuperarpassword/:token', comprobarTokenPassword)
-router.post('/nuevopassword/:token', crearNuevoPassword)
-
-//login
-router.post('/login', login)
-
-// rutas privadas (requieren autenticacion)
-
-//Ver perfil
-router.get('/perfil', verificarTokenJWT, perfil) 
-
-//actualizarperfil
-router.put('/actualizarperfil/:id', verificarTokenJWT, actualizarPerfil)
-
-//actualizarpassword
-router.put('/actualizarpassword', verificarTokenJWT, actualizarPassword)
+// Rutas privadas
+router.get('/perfil',verificarTokenJWT,perfil)
+router.put('/actualizarperfil/:id',verificarTokenJWT,reglasActualizarPerfil,validar,actualizarPerfil)
+router.put('/actualizarpassword',verificarTokenJWT,reglasCambiarPassword,validar,actualizarPassword)
 
 
 export default router
