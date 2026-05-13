@@ -2,6 +2,13 @@ import mongoose from 'mongoose'
 import Publicacion from '../models/Publicacion.js'
 import { subirImagenCloudinary, eliminarImagenCloudinary } from '../helpers/uploadCloudinary.js'
 
+const TIPOS_PERMITIDOS = ['image/jpeg', 'image/png', 'image/webp']
+
+const validarTipoImagen = (file) => {
+    if (!TIPOS_PERMITIDOS.includes(file.mimetype)) {
+        throw new Error('Formato no permitido. Solo se aceptan imágenes JPG, PNG o WEBP')
+    }
+}
 
 //  Crear una nueva publicacion de libro
 
@@ -21,9 +28,10 @@ const crearPublicacion = async (req, res) => {
             usuario: req.usuarioHeader._id
         })
 
-        // Subir imagen a Cloudinary si viene en la peticion
         if (req.files?.imagen) {
-            const { secure_url, public_id } = await subirImagenCloudinary(req.files.imagen.tempFilePath)
+            const file = req.files.imagen
+            validarTipoImagen(file)
+            const { secure_url, public_id } = await subirImagenCloudinary(file.tempFilePath, file)
             nuevaPublicacion.imagen = secure_url
             nuevaPublicacion.imagenID = public_id
         }
@@ -33,6 +41,9 @@ const crearPublicacion = async (req, res) => {
 
     } catch (error) {
         console.error(error)
+        if (error.message.includes('MB') || error.message.includes('Formato')) {
+            return res.status(400).json({ msg: error.message })
+        }
         res.status(500).json({ msg: `Error en el servidor - ${error}` })
     }
 }
@@ -135,8 +146,10 @@ const editarPublicacion = async (req, res) => {
         publicacionBDD.categoria   = categoria   ?? publicacionBDD.categoria
 
         if (req.files?.imagen) {
+            const file = req.files.imagen
+            validarTipoImagen(file)
             await eliminarImagenCloudinary(publicacionBDD.imagenID)
-            const { secure_url, public_id } = await subirImagenCloudinary(req.files.imagen.tempFilePath)
+            const { secure_url, public_id } = await subirImagenCloudinary(file.tempFilePath, file)
             publicacionBDD.imagen   = secure_url
             publicacionBDD.imagenID = public_id
         }
