@@ -1,5 +1,7 @@
 import { body } from 'express-validator'
 
+const TIENE_CARACTER_ESPECIAL = /[^A-Za-z0-9]/
+
 //  Para el usuario 
 
 export const reglasRegistro = [
@@ -29,7 +31,9 @@ export const reglasRegistro = [
         .matches(/[A-Z]/)
             .withMessage('El password debe tener al menos una letra mayúscula')
         .matches(/[0-9]/)
-            .withMessage('El password debe tener al menos un número'),
+            .withMessage('El password debe tener al menos un número')
+        .matches(TIENE_CARACTER_ESPECIAL)
+            .withMessage('El password debe tener al menos un carácter especial'),
 
     body('telefono')
         .trim()
@@ -83,7 +87,9 @@ export const reglasNuevoPassword = [
         .matches(/[A-Z]/)
             .withMessage('El password debe tener al menos una letra mayúscula')
         .matches(/[0-9]/)
-            .withMessage('El password debe tener al menos un número'),
+            .withMessage('El password debe tener al menos un número')
+        .matches(TIENE_CARACTER_ESPECIAL)
+            .withMessage('El password debe tener al menos un carácter especial'),
 
     body('confirmpassword')
         .notEmpty()
@@ -145,6 +151,8 @@ export const reglasCambiarPassword = [
             .withMessage('El nuevo password debe tener al menos una letra mayúscula')
         .matches(/[0-9]/)
             .withMessage('El nuevo password debe tener al menos un número')
+        .matches(TIENE_CARACTER_ESPECIAL)
+            .withMessage('El nuevo password debe tener al menos un carácter especial')
 ]
 
 //  reglas para las  publciones
