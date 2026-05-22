@@ -6,11 +6,15 @@ import mongoose from 'mongoose'
 
 const registro = async (req, res) => {
     try {
-        const { nombre, email, password, telefono, carrera } = req.body
+        const { nombre, email, password, confirmpassword, telefono, carrera } = req.body
 
         // Validar que los campos requeridos no estén vacíos
-        if (!nombre || !email || !password || !telefono) {
+        if (!nombre || !email || !password || !confirmpassword || !telefono) {
             return res.status(400).json({ msg: 'Lo sentimos, debes llenar todos los campos obligatorios' })
+        }
+
+        if (password !== confirmpassword) {
+            return res.status(400).json({ msg: 'Las contraseñas no coinciden' })
         }
 
         // Verificar si el email ya está registrado

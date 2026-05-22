@@ -35,6 +35,16 @@ export const reglasRegistro = [
         .matches(TIENE_CARACTER_ESPECIAL)
             .withMessage('El password debe tener al menos un carácter especial'),
 
+    body('confirmpassword')
+        .notEmpty()
+            .withMessage('Debes confirmar la contraseña')
+        .custom((value, { req }) => {
+            if (value !== req.body.password) {
+                throw new Error('Las contraseñas no coinciden')
+            }
+            return true
+        }),
+
     body('telefono')
         .trim()
         .notEmpty()
