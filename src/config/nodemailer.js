@@ -2,9 +2,10 @@ import nodemailer from 'nodemailer'
 import dotenv from 'dotenv'
 dotenv.config()
 
+
 const transporter = nodemailer.createTransport({
     host: process.env.HOST_MAILTRAP,
-    port: Number(process.env.PORT_MAILTRAP),
+    port: Number(process.env.PORT_MAILTRAP)|| 2525,
     secure: false,
     family: 4,
     auth: {
