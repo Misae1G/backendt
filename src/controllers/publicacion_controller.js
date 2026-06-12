@@ -31,7 +31,7 @@ const crearPublicacion = async (req, res) => {
         if (req.files?.imagen) {
             const file = req.files.imagen
             validarTipoImagen(file)
-            const { secure_url, public_id } = await subirImagenCloudinary(file.tempFilePath, file)
+            const { secure_url, public_id } = await subirImagenCloudinary(file)
             nuevaPublicacion.imagen = secure_url
             nuevaPublicacion.imagenID = public_id
         }
@@ -149,7 +149,7 @@ const editarPublicacion = async (req, res) => {
             const file = req.files.imagen
             validarTipoImagen(file)
             await eliminarImagenCloudinary(publicacionBDD.imagenID)
-            const { secure_url, public_id } = await subirImagenCloudinary(file.tempFilePath, file)
+            const { secure_url, public_id } = await subirImagenCloudinary(file)
             publicacionBDD.imagen   = secure_url
             publicacionBDD.imagenID = public_id
         }
